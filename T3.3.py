@@ -20,10 +20,10 @@ pointtemp = []
 
 #读数据
 def readread():
-    df1 = pd.read_excel(r'D:\Desktop\model7\one.xlsx', sheet_name=sheet_name)
-    df2 = pd.read_excel(r'D:\Desktop\model7\two.xlsx', sheet_name=sheet_name)
-    df3 = pd.read_excel(r'D:\Desktop\model7\three.xlsx', sheet_name=sheet_name)
-    df4 = pd.read_excel(r'D:\Desktop\model7\four.xlsx', sheet_name=sheet_name)
+    df1 = pd.read_excel(r'./data/one.xlsx', sheet_name=sheet_name)
+    df2 = pd.read_excel(r'./data/two.xlsx', sheet_name=sheet_name)
+    df3 = pd.read_excel(r'./data/margin_and_radius.xlsx', sheet_name=sheet_name)
+    df4 = pd.read_excel(r'./data/four.xlsx', sheet_name=sheet_name)
 
     data1 = df1.values.tolist()
     data2 = df2.values.tolist()
@@ -117,6 +117,7 @@ def getfeasiblepoint(list1,list2):
 if __name__ == "__main__":
 
     readread()
+
     haha = 0
     Minlength = 1000000000000000
     while True:
