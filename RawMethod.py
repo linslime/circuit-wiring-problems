@@ -24,7 +24,7 @@ pointtemp = []
 
 
 # 读数据
-def readread():
+def read():
 	df1 = pd.read_csv(args.data_path + '/connected_edge.csv', header=None)
 	df2 = pd.read_csv(args.data_path + '/unconnected_edge.csv', header=None)
 	df3 = pd.read_csv(args.data_path + '/margin_and_radius.csv', header=None)
@@ -133,7 +133,7 @@ def getfeasiblepoint(list1, list2):
 # 主函数
 if __name__ == "__main__":
 	
-	readread()
+	read()
 	haha = 0
 	Minlength = 1000000000000000
 	while True:
