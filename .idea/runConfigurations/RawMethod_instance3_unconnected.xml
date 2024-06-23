@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="RawMethod_instance3_unconnected" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="RawMethod_instance3_unconnected" type="PythonConfigurationType" factoryName="Python" folderName="RawMethod">
     <module name="circuit-wiring-problems" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />

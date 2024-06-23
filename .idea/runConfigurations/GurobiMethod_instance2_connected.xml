@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="GurobiMethod_instance2_connected" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="GurobiMethod_instance2_connected" type="PythonConfigurationType" factoryName="Python" folderName="GurobiMethod">
     <module name="circuit-wiring-problems" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
