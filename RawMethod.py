@@ -29,11 +29,12 @@ def read():
 	df2 = pd.read_csv(args.data_path + '/unconnected_edge.csv', header=None)
 	df3 = pd.read_csv(args.data_path + '/margin_and_radius.csv', header=None)
 	df4 = pd.read_csv(args.data_path + '/component_position.csv', header=None)
+	df5 = pd.read_csv(args.data_path + '/component_number_per_line.csv', header=None)
 	data1 = df1.values.tolist()
 	data2 = df2.values.tolist()
 	data3 = df3.values.tolist()
 	data4 = df4.values.tolist()
-	
+	data5 = df5.values.tolist()
 	for i in data1:
 		one = pointnumber(i[:3])
 		two = pointnumber(i[3:])
@@ -54,8 +55,8 @@ def read():
 			B[two, one] = 0
 	
 	linetemp = []
-	for i in range(int(len(data3[1]) / 2)):
-		linetemp.append((data3[1][i]))
+	for i in range(len(data5[0])):
+		linetemp.append(data5[0][i])
 	margin = data3[0][0::2]
 	radius = data3[0][1::2]
 	for i in range(len(margin)):
@@ -65,10 +66,10 @@ def read():
 	
 	for i in data4:
 		point[pointnumber(i)] = 0
-	
+	temp = 0
 	for i in range(len(linetemp)):
-		list = [i] + data4[:linetemp[i]]
-		data4 = data4[linetemp[i]:]
+		list = [i] + data4[temp:temp + linetemp[i]]
+		temp += linetemp[i]
 		line_point.append(list)
 
 
