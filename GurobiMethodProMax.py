@@ -141,10 +141,7 @@ if __name__ == "__main__":
 		first_component = data.get_first_component_per_line(i)
 		out_edges = data.get_point_to_out_edge()[first_component]
 		MODEL.addConstr(gurobipy.quicksum(x[j] for j in out_edges) >= 1)
-	
-	# in_edges = data.get_point_to_in_edge()[first_component]
-	# MODEL.addConstr(gurobipy.quicksum(x[j] for j in in_edges) == 0)
-	
+
 	for i in range(data.get_line_number()):
 		residual_components = data.get_residual_component_per_line(i)
 		for residual_component in residual_components:
@@ -157,56 +154,22 @@ if __name__ == "__main__":
 		MODEL.addConstr(gurobipy.quicksum(x[j] for j in out_edges) >= gurobipy.quicksum(x[j] for j in in_edges))
 		MODEL.addConstr(gurobipy.quicksum(x[j] for j in out_edges) <= 10 * gurobipy.quicksum(x[j] for j in in_edges))
 	
-	u = MODEL.addVars(data.get_point_number(), lb=0, ub=data.get_point_number() * data.get_line_number(),
-	                  vtype=gurobipy.GRB.INTEGER)
+	u = MODEL.addVars(data.get_point_number(), lb=0, ub=data.get_point_number() * data.get_line_number(), vtype=gurobipy.GRB.INTEGER)
 	for i in range(data.get_line_number()):
 		first_component = data.get_first_component_per_line(i)
 		MODEL.addConstr(u[first_component] == i * data.get_point_number())
 		
 		residual_components = data.get_residual_component_per_line(i)
 		for residual_component in residual_components:
-			# MODEL.addConstr(u[residual_component] == [i * data.get_point_number() + 1, (i + 1) * data.get_point_number() - 1])
-			MODEL.addRange(u[residual_component], i * data.get_point_number() + 1,
-			               (i + 1) * data.get_point_number() - 1)
+			MODEL.addRange(u[residual_component], i * data.get_point_number() + 1, (i + 1) * data.get_point_number() - 1)
 	for i in range(data.get_edge_number()):
 		pre_point = data.get_index_to_edge()[i][0]
 		next_point = data.get_index_to_edge()[i][1]
-		# MODEL.addConstr(u[pre_point] - u[next_point] + data.get_point_number() * x[i] <= data.get_point_number() - 1)
-		# MODEL.addConstr((x[i] == 1) >> (u[pre_point] + 1 <= u[next_point])) 效率很低
-		MODEL.addConstr((x[i] == 1) >> (u[pre_point] + 1 == u[next_point]))  # 效率低
-	
-	# w = MODEL.addVars(data.get_point_number(), lb=0, ub=sum(len(data.get_all_component_per_line(j)) for j in range(data.get_line_number())), vtype=gurobipy.GRB.INTEGER)
-	#
-	# for i in range(data.get_line_number()):
-	# 	first_component = data.get_first_component_per_line(i)
-	# 	residual_components = data.get_residual_component_per_line(i)
-	# 	MODEL.addConstr(w[first_component] == sum(len(data.get_all_component_per_line(j)) for j in range(i)))
-	# 	for component in residual_components:
-	# 		MODEL.addConstr(w[component] <= sum(len(data.get_all_component_per_line(j)) for j in range(i + 1)) - 1)
-	# 		MODEL.addConstr(w[component] >= sum(len(data.get_all_component_per_line(j)) for j in range(i)) + 1)
-	#
-	# for i in data.get_other_edge():
-	# 	pre_point = data.get_index_to_edge()[i][0]
-	# 	next_point = data.get_index_to_edge()[i][1]
-	# 	MODEL.addConstr((x[i] == 1) >> (w[pre_point] == w[next_point]))
-	#
-	# for i in data.get_in_component_edge():
-	# 	pre_point = data.get_index_to_edge()[i][0]
-	# 	next_point = data.get_index_to_edge()[i][1]
-	# 	MODEL.addConstr((x[i] == 1) >> (w[pre_point] == w[next_point] - 1))
+		MODEL.addConstr((x[i] == 1) >> (u[pre_point] + 1 == u[next_point]))
 	
 	MODEL.setObjective(gurobipy.quicksum(x[i] for i in range(data.get_edge_number())), gurobipy.GRB.MINIMIZE)
-	# MODEL.setParam("TimeLimit", 10)
 	MODEL.setParam("MIPFocus", 1)
 	MODEL.optimize()
 
-# ans = []
-# for i in range(data.get_edge_number()):
-# 	if 1 == int(x[i].x):
-# 		pre_point = data.get_index_to_edge()[i][0]
-# 		next_point = data.get_index_to_edge()[i][1]
-# 		ans.append((pre_point, next_point))
-# print(ans)
-# print(len(ans))
-# pass
+
 
