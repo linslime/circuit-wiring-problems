@@ -14,7 +14,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/RawMethod.py" />
-    <option name="PARAMETERS" value="--length=16 --width=16 --data_path=&quot;./data/instance1&quot; --is_connected=&quot;connected&quot;" />
+    <option name="PARAMETERS" value="--length=16 --width=16 --p=0.975 --max_search_length=2000 --data_path=&quot;./data/instance1&quot; --is_connected=&quot;connected&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
