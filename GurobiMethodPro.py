@@ -169,6 +169,8 @@ if __name__ == "__main__":
 		# MODEL.addConstr((w[pre_point] - w[next_point]) * x[i] == 0)
 	MODEL.setObjective(gurobipy.quicksum(x[i] for i in range(data.get_edge_number())), gurobipy.GRB.MINIMIZE)
 	# MODEL.setParam("MIPFocus", 1)
+	MODEL.setParam("Heuristics", 1)
+	MODEL.setParam("ZeroObjNodes", 100)
 	MODEL.optimize()
 	
 	
