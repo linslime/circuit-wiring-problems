@@ -38,6 +38,9 @@ class graph_manage():
 		residual_graph = graph(points=points, adjacency_point=parent_adjacency_point)
 		return residual_graph
 
+	def get_edges_number(self):
+		return sum([len(i) for i in self.child_path]) - len(self.child_path)
+		
 class graph():
 	parent_point_length = 0
 	def __init__(self, points, adjacency_point):
@@ -191,10 +194,10 @@ def get_adjacent_point(graph, points):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
 	parser.add_argument('--high', type=int, default=2)
-	parser.add_argument("--length", type=int, default=128)
-	parser.add_argument("--width", type=int, default=128)
+	parser.add_argument("--length", type=int, default=64)
+	parser.add_argument("--width", type=int, default=64)
 	parser.add_argument("--data_path", type=str, default="./data/instance3")
-	parser.add_argument("--is_connected", type=str, default="connected")
+	parser.add_argument("--is_connected", type=str, default="unconnected")
 	args = parser.parse_args()
 	
 	parent_graph, component_position_per_line = init_data()
@@ -227,4 +230,5 @@ if __name__ == "__main__":
 			else:
 				task_index, _ = graph_manage.delete_graph()
 				task_list.append(task_index)
-			
+	
+	print(graph_manage.get_edges_number())
