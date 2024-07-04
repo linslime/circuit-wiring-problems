@@ -207,6 +207,9 @@ if __name__ == "__main__":
 	
 	current_graph = parent_graph
 	while len(task_list) > 0:
+		#每次重现开始，就打乱任务顺序
+		if len(task_list) == len(component_position_per_line):
+			random.shuffle(task_list)
 		print(len(task_list))
 		current_task = task_list.pop(0)
 		flags = []
