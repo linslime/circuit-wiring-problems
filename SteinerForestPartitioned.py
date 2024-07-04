@@ -6,25 +6,26 @@ import random
 import numpy as np
 import math
 
-class graph_manage:
+
+class graph_manage():
 	def __init__(self, parent_graph):
 		self.parent_graph = parent_graph
-		self.child_graph = {}
-		
-	def add_graph(self, key, graph):
-		if key not in self.child_graph:
-			self.child_graph[key] = graph
-		
+		self.child_path = []
+		self.child_path_index = []
+	
+	def add_path(self, index, path):
+		self.child_path_index.append(index)
+		self.child_path.append(path)
+	
 	def delete_graph(self, key):
-		if key in self.child_graph:
-			del self.child_graph[key]
+		return self.child_path_index.pop(0), self.child_path.pop(0)
 	
 	def get_residual_graph(self):
 		parent_points = self.parent_graph.get_points()
 		parent_adjacency_point = copy.deepcopy(self.parent_graph.get_adjacent_points())
 		child_points = set()
-		for i in self.child_graph:
-			child_points += self.child_graph[i].get_points()
+		for i in self.child_path:
+			child_points += i
 		points = parent_points - child_points
 		
 		for point in child_points:
@@ -33,13 +34,19 @@ class graph_manage:
 				for i in adjacency_point:
 					parent_adjacency_point[i].remove(point)
 				del parent_adjacency_point[point]
-		return points, parent_adjacency_point
+		
+		residual_graph = graph(points=points, adjacency_point=parent_adjacency_point)
+		return residual_graph
 
-class graph:
-	def __init__(self, points, adjacency_point, parent_point_length):
+class graph():
+	parent_point_length = 0
+	def __init__(self, points, adjacency_point):
 		self.__points = points
 		self.__adjacency_point = adjacency_point
-		self.__parent_point_length = parent_point_length
+	
+	@staticmethod
+	def set_parent_point_length(value):
+		graph.parent_point_length = value
 	
 	def get_points(self):
 		return self.__points
@@ -70,7 +77,7 @@ class graph:
 		return True
 	
 	def get_distance(self, component):
-		flag = np.full((self.__parent_point_length), -1)
+		flag = np.full(self.parent_point_length, -1)
 		visit = [component]
 		flag[component] = 0
 		while len(visit) != 0:
@@ -81,7 +88,7 @@ class graph:
 					flag[i] = flag[current_point] + 1
 					visit.append(i)
 		return flag
-		
+	
 def init_data():
 	data_connected_edge = pd.read_csv(args.data_path + '/connected_edge.csv', header=None).values.tolist()
 	data_unconnected_edge = pd.read_csv(args.data_path + '/unconnected_edge.csv', header=None).values.tolist()
@@ -130,7 +137,8 @@ def init_data():
 				point_dir[(position[0], position[1], position[2])])
 	
 	points = set([i for i in range(len(point_dir))])
-	total_graph = graph(adjacency_point=adjacency_point, points=points, parent_point_length=len(point_dir))
+	graph.set_parent_point_length(len(point_dir))
+	total_graph = graph(adjacency_point=adjacency_point, points=points)
 	
 	component_position_per_line = []
 	pre_number = 0
@@ -190,17 +198,4 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 	
 	parent_graph, component_position_per_line = init_data()
-	print("start")
-	start = time.time()
-	list = []
-	if parent_graph.is_connected(component_position_per_line[0]):
-		for i in component_position_per_line[0]:
-			list.append(parent_graph.get_distance(i))
-	end = time.time()
-	print(end - start)
-	start = time.time()
-	a = get_convergence_point(list)
-	print(a)
-	end = time.time()
-	print(end - start)
 	
