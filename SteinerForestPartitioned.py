@@ -17,15 +17,15 @@ class graph_manage():
 		self.child_path_index.append(index)
 		self.child_path.append(path)
 	
-	def delete_graph(self, key):
+	def delete_graph(self):
 		return self.child_path_index.pop(0), self.child_path.pop(0)
 	
 	def get_residual_graph(self):
 		parent_points = self.parent_graph.get_points()
-		parent_adjacency_point = copy.deepcopy(self.parent_graph.get_adjacent_points())
+		parent_adjacency_point = copy.deepcopy(self.parent_graph.get_adjacency_point())
 		child_points = set()
 		for i in self.child_path:
-			child_points += i
+			child_points.update(i)
 		points = parent_points - child_points
 		
 		for point in child_points:
@@ -198,4 +198,33 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 	
 	parent_graph, component_position_per_line = init_data()
+	graph_manage = graph_manage(parent_graph)
 	
+	task_list = [i for i in range(len(component_position_per_line))]
+	
+	current_graph = parent_graph
+	while len(task_list) > 0:
+		print(len(task_list))
+		current_task = task_list.pop(0)
+		flags = []
+		for component_position in range(len(component_position_per_line[current_task])):
+			flag = current_graph.get_distance(component_position_per_line[current_task][component_position])
+			flags.append(flag)
+		convergence_point, _ = get_convergence_point(flags)
+		path = set()
+		for flag in flags:
+			path.update(get_child_path(current_graph, flag, convergence_point))
+		graph_manage.add_path(current_task, path)
+		while True:
+			current_graph = graph_manage.get_residual_graph()
+			connected = True
+			for i in task_list:
+				connected *= current_graph.is_connected(component_position_per_line[i])
+				if not connected:
+					break
+			if connected:
+				break
+			else:
+				task_index, _ = graph_manage.delete_graph()
+				task_list.append(task_index)
+			
