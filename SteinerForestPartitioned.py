@@ -5,13 +5,15 @@ import time
 import random
 import numpy as np
 import math
-
+import multiprocessing
 
 class graph_manage():
-	def __init__(self, parent_graph):
+	def __init__(self, parent_graph, component_position_per_line):
 		self.parent_graph = parent_graph
 		self.child_path = []
 		self.child_path_index = []
+		self.component_position_per_line = component_position_per_line
+		self.task_list = [i for i in range(len(component_position_per_line))]
 	
 	def add_path(self, index, path):
 		self.child_path_index.append(index)
@@ -154,16 +156,26 @@ def init_data():
 			component_position_per_line[i][j] = point_dir[component_position_per_line[i][j][0], component_position_per_line[i][j][1], component_position_per_line[i][j][2]]
 	return total_graph, component_position_per_line
 
-def get_convergence_point(components_flag):
-	index_number = int(math.pow(len(components_flag[0]), 0.5) / 2)
+#同一树中，多个子线路的汇聚点
+#components_flag表示各个子线的距离
+def get_convergence_point(components_flag, graph):
+	point_list = get_point_list(graph)
+	index_number = int(math.pow(len(point_list), 0.5) / 2)
 	while True:
-		index = random.sample([i for i in range(len(components_flag[0]))], index_number)
+		index = random.sample(point_list, index_number)
 		total_distance = np.sum([components_flag[i][index] for i in range(len(components_flag))], axis=0)
 		min_index = np.argmin(total_distance)
 		if total_distance[min_index] > 0:
 			break
 	return index[min_index], total_distance[min_index]
 
+#从图中得到点的列表
+def get_point_list(graph):
+	return [i for i in graph.get_points()]
+#找一条子路
+#flag表示子路
+#graph表示图
+#convergence_point表示汇聚点，也就是出发点
 def get_child_path(graph, flag, convergence_point):
 	adjacency_point = graph.get_adjacency_point()
 	path = set()
@@ -190,48 +202,56 @@ def get_adjacent_point(graph, points):
 				temp.add(j)
 		adjacent_point[i] = temp
 	return adjacent_point
-	
-if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='manual to this script')
-	parser.add_argument('--high', type=int, default=2)
-	parser.add_argument("--length", type=int, default=64)
-	parser.add_argument("--width", type=int, default=64)
-	parser.add_argument("--data_path", type=str, default="./data/instance3")
-	parser.add_argument("--is_connected", type=str, default="unconnected")
-	args = parser.parse_args()
-	
-	parent_graph, component_position_per_line = init_data()
-	graph_manage = graph_manage(parent_graph)
-	
-	task_list = [i for i in range(len(component_position_per_line))]
-	
-	current_graph = parent_graph
+
+def get_path(graph_manage):
+	current_graph = graph_manage.parent_graph
+	task_list = graph_manage.task_list
+	component_position_per_line = graph_manage.component_position_per_line
 	while len(task_list) > 0:
-		#每次重现开始，就打乱任务顺序
-		if len(task_list) == len(component_position_per_line):
-			random.shuffle(task_list)
-		print(len(task_list))
 		current_task = task_list.pop(0)
 		flags = []
 		for component_position in range(len(component_position_per_line[current_task])):
 			flag = current_graph.get_distance(component_position_per_line[current_task][component_position])
 			flags.append(flag)
-		convergence_point, _ = get_convergence_point(flags)
+		convergence_point, _ = get_convergence_point(flags, current_graph)
 		path = set()
 		for flag in flags:
 			path.update(get_child_path(current_graph, flag, convergence_point))
 		graph_manage.add_path(current_task, path)
-		while True:
+		
+		key = False  # 用于标识是否有可再布线的
+		for i in task_list:
 			current_graph = graph_manage.get_residual_graph()
-			connected = True
-			for i in task_list:
-				connected *= current_graph.is_connected(component_position_per_line[i])
-				if not connected:
-					break
-			if connected:
+			if current_graph.is_connected(component_position_per_line[task_list[0]]):
+				key = True
 				break
 			else:
-				task_index, _ = graph_manage.delete_graph()
-				task_list.append(task_index)
+				temp_task = task_list.pop(0)
+				task_list.append(temp_task)
+		if not key:
+			return graph_manage
 	
-	print(graph_manage.get_edges_number())
+	
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description='manual to this script')
+	parser.add_argument('--high', type=int, default=2)
+	parser.add_argument("--length", type=int, default=128)
+	parser.add_argument("--width", type=int, default=128)
+	parser.add_argument("--data_path", type=str, default="./data/instance3")
+	parser.add_argument("--is_connected", type=str, default="unconnected")
+	args = parser.parse_args()
+	
+	parent_graph, component_position_per_line = init_data()
+	graph_manage = graph_manage(parent_graph, component_position_per_line)
+	pool = multiprocessing.Pool(12)
+	results = []
+	for i in range(24):
+		results.append(pool.apply_async(get_path, args=(graph_manage,)))
+	pool.close()
+	pool.join()
+	
+	for result in results:
+		print(len(result.get().child_path))
+	
+	# print(graph_manage.__dict__)
+	# print(graph_manage.get_edges_number())
