@@ -7,9 +7,9 @@ import numpy as np
 import math
 import multiprocessing
 
-class graph_manage():
-	def __init__(self, parent_graph, component_position_per_line):
-		self.parent_graph = parent_graph
+class GraphManage():
+	def __init__(self, points, adjacency_point, component_position_per_line):
+		self.parent_graph = Graph(points=points, adjacency_point=adjacency_point)
 		self.child_path = []
 		self.child_path_index = []
 		self.component_position_per_line = component_position_per_line
@@ -37,13 +37,13 @@ class graph_manage():
 					parent_adjacency_point[i].remove(point)
 				del parent_adjacency_point[point]
 		
-		residual_graph = graph(points=points, adjacency_point=parent_adjacency_point)
+		residual_graph = Graph(points=points, adjacency_point=parent_adjacency_point)
 		return residual_graph
 
 	def get_edges_number(self):
 		return sum([len(i) for i in self.child_path]) - len(self.child_path)
 		
-class graph():
+class Graph():
 	parent_point_length = 0
 	def __init__(self, points, adjacency_point):
 		self.__points = points
@@ -51,7 +51,7 @@ class graph():
 	
 	@staticmethod
 	def set_parent_point_length(value):
-		graph.parent_point_length = value
+		Graph.parent_point_length = value
 	
 	def get_points(self):
 		return self.__points
@@ -142,8 +142,8 @@ def init_data():
 				point_dir[(position[0], position[1], position[2])])
 	
 	points = set([i for i in range(len(point_dir))])
-	graph.set_parent_point_length(len(point_dir))
-	total_graph = graph(adjacency_point=adjacency_point, points=points)
+	Graph.set_parent_point_length(len(point_dir))
+	total_graph = Graph(adjacency_point=adjacency_point, points=points)
 	
 	component_position_per_line = []
 	pre_number = 0
@@ -154,7 +154,7 @@ def init_data():
 	for i in range(len(component_position_per_line)):
 		for j in range(len(component_position_per_line[i])):
 			component_position_per_line[i][j] = point_dir[component_position_per_line[i][j][0], component_position_per_line[i][j][1], component_position_per_line[i][j][2]]
-	return total_graph, component_position_per_line
+	return points, adjacency_point, component_position_per_line
 
 #同一树中，多个子线路的汇聚点
 #components_flag表示各个子线的距离
@@ -231,6 +231,26 @@ def get_path(graph_manage):
 		if not key:
 			return graph_manage
 	
+def get_path_format(points, adjacency_point, component_position_per_line):
+	graph_manage = GraphManage(adjacency_point=adjacency_point, points=points, component_position_per_line=component_position_per_line)
+	return get_path(graph_manage)
+
+def get_path_mutiprocesing(points, adjacency_point, component_position_per_line, run_number):
+	pool = multiprocessing.Pool()
+	results = []
+	for i in range(run_number):
+		results.append(pool.apply_async(get_path_format, args=(points, adjacency_point, component_position_per_line)))
+	pool.close()
+	pool.join()
+	max_length = 0
+	max_result = 0
+	for result in results:
+		if max_length < len(result.get().child_path):
+			max_length = len(result.get().child_path)
+			max_result = result.get()
+	return max_result
+	
+	
 	
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
@@ -240,18 +260,8 @@ if __name__ == "__main__":
 	parser.add_argument("--data_path", type=str, default="./data/instance3")
 	parser.add_argument("--is_connected", type=str, default="unconnected")
 	args = parser.parse_args()
-	
-	parent_graph, component_position_per_line = init_data()
-	graph_manage = graph_manage(parent_graph, component_position_per_line)
-	pool = multiprocessing.Pool(12)
-	results = []
-	for i in range(24):
-		results.append(pool.apply_async(get_path, args=(graph_manage,)))
-	pool.close()
-	pool.join()
-	
-	for result in results:
-		print(len(result.get().child_path))
-	
-	# print(graph_manage.__dict__)
-	# print(graph_manage.get_edges_number())
+
+	points, adjacency_point, component_position_per_line = init_data()
+	graph_manage = get_path_mutiprocesing(points, adjacency_point, component_position_per_line, 100)
+	print(len(graph_manage.task_list))
+	print(len(graph_manage.child_path))
