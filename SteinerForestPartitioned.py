@@ -311,20 +311,18 @@ def get_child_path_mutiprocessing(graph, flags, convergence_point):
 
 
 def get_one_path(graph, components_position):
-	start_time = time.time()
 	flags = []
 	for i in range(len(components_position)):
 		flag = graph.get_distance(components_position[i])
 		flags.append(flag)
 	# flags = get_flag_mutiprocessing(graph, components_position)
 	convergence_point, _ = get_convergence_point(flags, graph)
-	path = get_child_path_mutiprocessing(graph, flags, convergence_point)
-	# path = set()
-	# for flag in flags:
-	# 	points = get_child_path(graph, flag, convergence_point)
-	# 	path.update(points)
-	end_time = time.time()
-	print(end_time - start_time)
+	# path = get_child_path_mutiprocessing(graph, flags, convergence_point)
+	path = set()
+	for flag in flags:
+		points = get_child_path(graph, flag, convergence_point)
+		path.update(points)
+
 	return path
 
 
