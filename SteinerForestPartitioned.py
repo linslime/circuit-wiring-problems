@@ -93,7 +93,19 @@ class Graph():
 					flag[i] = flag[current_point] + 1
 					visit.append(i)
 		return flag
-	
+def get_flag(graph, component):
+	flag = np.full(graph.parent_point_length, -1)
+	visit = [component]
+	flag[component] = 0
+	while len(visit) != 0:
+		current_point = visit.pop(0)
+		next_points = graph.get_adjacency_point()[current_point]
+		for i in next_points:
+			if flag[i] == -1:
+				flag[i] = flag[current_point] + 1
+				visit.append(i)
+	# print(flag)
+	return flag
 def init_data():
 	data_connected_edge = pd.read_csv(args.data_path + '/connected_edge.csv', header=None).values.tolist()
 	data_unconnected_edge = pd.read_csv(args.data_path + '/unconnected_edge.csv', header=None).values.tolist()
@@ -237,52 +249,102 @@ def get_path_mutiprocesing(points, adjacency_point, component_position_per_line,
 			max_result = result.get()
 	return max_result
 
+
+def get_flag_format(points, adjacency_point, component):
+	graph = Graph(adjacency_point=adjacency_point, points=points)
+	return get_flag(graph, component)
+
+
+def get_flag_mutiprocessing(graph, components_position):
+	processing_number = min(multiprocessing.cpu_count(), len(components_position))
+	pool = multiprocessing.Pool(processes=processing_number)
+	results = []
+	for i in range(len(components_position)):
+		results.append(pool.apply_async(get_flag_format,
+		                                args=(graph.get_points(), graph.get_adjacency_point(), components_position[i])))
+	pool.close()
+	pool.join()
+	flags = []
+	for result in results:
+		flags.append(result.get())
+	return flags
+
+
+def get_child_path_format(points, adjacency_point, flag, convergence_point):
+	graph = Graph(adjacency_point=adjacency_point, points=points)
+	points = get_child_path(graph, flag, convergence_point)
+	return points
+
+
+def get_child_path_mutiprocessing(graph, flags, convergence_point):
+	process_number = min(multiprocessing.cpu_count(), len(flags))
+	pool = multiprocessing.Pool(processes=process_number)
+	results = []
+	for flag in flags:
+		results.append(pool.apply_async(get_child_path_format, args=(
+		graph.get_points(), graph.get_adjacency_point(), flag, convergence_point)))
+	pool.close()
+	pool.join()
+	path = set()
+	for result in results:
+		path.update(result.get())
+	return path
+
+
 def get_one_path(graph, components_position):
+	start_time = time.time()
 	flags = []
 	for i in range(len(components_position)):
 		flag = graph.get_distance(components_position[i])
 		flags.append(flag)
+	# flags = get_flag_mutiprocessing(graph, components_position)
 	convergence_point, _ = get_convergence_point(flags, graph)
-	path = set()
-	for flag in flags:
-		points = get_child_path(graph, flag, convergence_point)
-		path.update(points)
+	path = get_child_path_mutiprocessing(graph, flags, convergence_point)
+	# path = set()
+	# for flag in flags:
+	# 	points = get_child_path(graph, flag, convergence_point)
+	# 	path.update(points)
+	end_time = time.time()
+	print(end_time - start_time)
 	return path
 	
 	
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
-	parser.add_argument("--data_path", type=str, default="./data/instance1")
+	parser.add_argument("--data_path", type=str, default="./data/instance3")
 	parser.add_argument("--is_connected", type=str, default="connected")
 	args = parser.parse_args()
 
 	points, adjacency_point, component_position_per_line = init_data()
-	graph_manage1 = GraphManage(points, adjacency_point, component_position_per_line)
-	
-	while True:
-		graph_manage = copy.deepcopy(graph_manage1)
-		task_list = graph_manage.task_list
-		get_path(graph_manage)
-		while len(task_list) > 0:
-			index, _ = graph_manage.delete_path()
-			task_list.append(index)
-			
-			for i in range(len(graph_manage.child_path)):
-				child_path_index, _ = graph_manage.delete_path()
-				residual_graph = graph_manage.get_residual_graph()
-				path = get_one_path(residual_graph, component_position_per_line[child_path_index])
-				graph_manage.add_path(child_path_index, path)
-			get_path(graph_manage)
+	graph_manage = GraphManage(points, adjacency_point, component_position_per_line)
+	task_list = graph_manage.task_list
+	get_path(graph_manage)
+	while len(task_list) > 0:
+
 		
-		print(graph_manage.get_edges_number())
-	# print(len(graph_manage.task_list))
-	# print(len(task_list))
-	# print(len(graph_manage.child_path_index))
-	# print(len(graph_manage.child_path))
-	# paths = graph_manage.child_path
-	# for i in range(len(paths)):
-	# 	for j in range(i + 1, len(paths)):
-	# 		if len(paths[i] & paths[j]) > 0:
-	# 			print("fail")
-	# 		else:
-	# 			print("success")
+		print(task_list)
+		index, _ = graph_manage.delete_path()
+		task_list.append(index)
+		
+		for i in range(len(graph_manage.child_path)):
+			child_path_index, _ = graph_manage.delete_path()
+			residual_graph = graph_manage.get_residual_graph()
+			path = get_one_path(residual_graph, component_position_per_line[child_path_index])
+			graph_manage.add_path(child_path_index, path)
+		get_path(graph_manage)
+		
+
+	print(graph_manage.get_edges_number())
+
+	
+	print(len(graph_manage.task_list))
+	print(len(task_list))
+	print(len(graph_manage.child_path_index))
+	print(len(graph_manage.child_path))
+	paths = graph_manage.child_path
+	for i in range(len(paths)):
+		for j in range(i + 1, len(paths)):
+			if len(paths[i] & paths[j]) > 0:
+				print("fail")
+			else:
+				print("success")
