@@ -19,7 +19,7 @@ class GraphManage():
 		self.child_path_index.append(index)
 		self.child_path.append(path)
 	
-	def delete_graph(self):
+	def delete_path(self):
 		return self.child_path_index.pop(0), self.child_path.pop(0)
 	
 	def get_residual_graph(self):
@@ -204,32 +204,21 @@ def get_adjacent_point(graph, points):
 	return adjacent_point
 
 def get_path(graph_manage):
-	current_graph = graph_manage.parent_graph
 	task_list = graph_manage.task_list
 	component_position_per_line = graph_manage.component_position_per_line
-	while len(task_list) > 0:
-		current_task = task_list.pop(0)
-		flags = []
-		for component_position in range(len(component_position_per_line[current_task])):
-			flag = current_graph.get_distance(component_position_per_line[current_task][component_position])
-			flags.append(flag)
-		convergence_point, _ = get_convergence_point(flags, current_graph)
-		path = set()
-		for flag in flags:
-			path.update(get_child_path(current_graph, flag, convergence_point))
-		graph_manage.add_path(current_task, path)
-		
-		key = False  # 用于标识是否有可再布线的
-		for i in task_list:
+	
+	current_graph = graph_manage.get_residual_graph()
+	current_task = task_list.pop(0)
+	for i in range(len(task_list)):
+		if current_graph.is_connected(component_position_per_line[current_task]):
+			path = get_one_path(current_graph, component_position_per_line[current_task])
+			graph_manage.add_path(current_task, path)
 			current_graph = graph_manage.get_residual_graph()
-			if current_graph.is_connected(component_position_per_line[task_list[0]]):
-				key = True
-				break
-			else:
-				temp_task = task_list.pop(0)
-				task_list.append(temp_task)
-		if not key:
-			return graph_manage
+			current_task = task_list.pop(0)
+		else:
+			task_list.append(current_task)
+			current_task = task_list.pop(0)
+	return graph_manage
 	
 def get_path_format(points, adjacency_point, component_position_per_line):
 	graph_manage = GraphManage(adjacency_point=adjacency_point, points=points, component_position_per_line=component_position_per_line)
@@ -249,19 +238,44 @@ def get_path_mutiprocesing(points, adjacency_point, component_position_per_line,
 			max_length = len(result.get().child_path)
 			max_result = result.get()
 	return max_result
-	
+
+def get_one_path(graph, components_position):
+	flags = []
+	for i in range(len(components_position)):
+		flag = graph.get_distance(components_position[i])
+		flags.append(flag)
+	convergence_point, _ = get_convergence_point(flags, graph)
+	path = set()
+	for flag in flags:
+		points = get_child_path(graph, flag, convergence_point)
+		path.update(points)
+	return path
 	
 	
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
-	parser.add_argument('--high', type=int, default=2)
-	parser.add_argument("--length", type=int, default=128)
-	parser.add_argument("--width", type=int, default=128)
-	parser.add_argument("--data_path", type=str, default="./data/instance3")
-	parser.add_argument("--is_connected", type=str, default="unconnected")
+	parser.add_argument("--data_path", type=str, default="./data/instance1")
+	parser.add_argument("--is_connected", type=str, default="connected")
 	args = parser.parse_args()
 
 	points, adjacency_point, component_position_per_line = init_data()
-	graph_manage = get_path_mutiprocesing(points, adjacency_point, component_position_per_line, 100)
-	print(len(graph_manage.task_list))
-	print(len(graph_manage.child_path))
+	graph_manage = get_path_mutiprocesing(points, adjacency_point, component_position_per_line, 1)
+	
+	task_list = graph_manage.task_list
+	
+	while len(task_list) > 0:
+		print(task_list)
+		index, _ = graph_manage.delete_path()
+		task_list.append(index)
+		
+		for i in range(len(graph_manage.child_path)):
+			child_path_index, _ = graph_manage.delete_path()
+			residual_graph = graph_manage.get_residual_graph()
+			path = get_one_path(residual_graph, component_position_per_line[child_path_index])
+			graph_manage.add_path(child_path_index, path)
+		
+		get_path(graph_manage)
+		
+	print(graph_manage.get_edges_number())
+
+	
