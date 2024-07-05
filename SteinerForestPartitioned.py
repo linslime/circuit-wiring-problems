@@ -208,16 +208,14 @@ def get_path(graph_manage):
 	component_position_per_line = graph_manage.component_position_per_line
 	
 	current_graph = graph_manage.get_residual_graph()
-	current_task = task_list.pop(0)
 	for i in range(len(task_list)):
+		current_task = task_list.pop(0)
 		if current_graph.is_connected(component_position_per_line[current_task]):
 			path = get_one_path(current_graph, component_position_per_line[current_task])
 			graph_manage.add_path(current_task, path)
 			current_graph = graph_manage.get_residual_graph()
-			current_task = task_list.pop(0)
 		else:
 			task_list.append(current_task)
-			current_task = task_list.pop(0)
 	return graph_manage
 	
 def get_path_format(points, adjacency_point, component_position_per_line):
@@ -259,23 +257,32 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	points, adjacency_point, component_position_per_line = init_data()
-	graph_manage = get_path_mutiprocesing(points, adjacency_point, component_position_per_line, 1)
+	graph_manage1 = GraphManage(points, adjacency_point, component_position_per_line)
 	
-	task_list = graph_manage.task_list
-	
-	while len(task_list) > 0:
-		print(task_list)
-		index, _ = graph_manage.delete_path()
-		task_list.append(index)
-		
-		for i in range(len(graph_manage.child_path)):
-			child_path_index, _ = graph_manage.delete_path()
-			residual_graph = graph_manage.get_residual_graph()
-			path = get_one_path(residual_graph, component_position_per_line[child_path_index])
-			graph_manage.add_path(child_path_index, path)
-		
+	while True:
+		graph_manage = copy.deepcopy(graph_manage1)
+		task_list = graph_manage.task_list
 		get_path(graph_manage)
+		while len(task_list) > 0:
+			index, _ = graph_manage.delete_path()
+			task_list.append(index)
+			
+			for i in range(len(graph_manage.child_path)):
+				child_path_index, _ = graph_manage.delete_path()
+				residual_graph = graph_manage.get_residual_graph()
+				path = get_one_path(residual_graph, component_position_per_line[child_path_index])
+				graph_manage.add_path(child_path_index, path)
+			get_path(graph_manage)
 		
-	print(graph_manage.get_edges_number())
-
-	
+		print(graph_manage.get_edges_number())
+	# print(len(graph_manage.task_list))
+	# print(len(task_list))
+	# print(len(graph_manage.child_path_index))
+	# print(len(graph_manage.child_path))
+	# paths = graph_manage.child_path
+	# for i in range(len(paths)):
+	# 	for j in range(i + 1, len(paths)):
+	# 		if len(paths[i] & paths[j]) > 0:
+	# 			print("fail")
+	# 		else:
+	# 			print("success")
