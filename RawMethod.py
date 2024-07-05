@@ -177,6 +177,7 @@ if __name__ == "__main__":
 				while True:
 					if step > args.max_search_length:
 						key = 1
+						print(i)
 						break
 					step += 1
 					route_n.append(point_n)
@@ -196,6 +197,7 @@ if __name__ == "__main__":
 							pointtemp[pointnumber(upoint)] = 0
 							if len(route_n) == 0:
 								key = 1
+								print(i)
 								break
 							else:
 								point_n = route_n.pop()
