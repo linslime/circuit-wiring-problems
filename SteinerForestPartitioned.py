@@ -7,6 +7,7 @@ import numpy as np
 import math
 import multiprocessing
 
+
 class GraphManage():
 	def __init__(self, points, adjacency_point, component_position_per_line):
 		self.parent_graph = Graph(points=points, adjacency_point=adjacency_point)
@@ -39,12 +40,14 @@ class GraphManage():
 		
 		residual_graph = Graph(points=points, adjacency_point=parent_adjacency_point)
 		return residual_graph
-
+	
 	def get_edges_number(self):
 		return sum([len(i) for i in self.child_path]) - len(self.child_path)
-		
+
+
 class Graph():
 	parent_point_length = 0
+	
 	def __init__(self, points, adjacency_point):
 		self.__points = points
 		self.__adjacency_point = adjacency_point
@@ -93,6 +96,8 @@ class Graph():
 					flag[i] = flag[current_point] + 1
 					visit.append(i)
 		return flag
+
+
 def get_flag(graph, component):
 	flag = np.full(graph.parent_point_length, -1)
 	visit = [component]
@@ -106,10 +111,13 @@ def get_flag(graph, component):
 				visit.append(i)
 	# print(flag)
 	return flag
+
+
 def init_data():
 	data_connected_edge = pd.read_csv(args.data_path + '/connected_edge.csv', header=None).values.tolist()
 	data_unconnected_edge = pd.read_csv(args.data_path + '/unconnected_edge.csv', header=None).values.tolist()
-	data_component_number_per_line = pd.read_csv(args.data_path + '/component_number_per_line.csv', header=None).values.tolist()
+	data_component_number_per_line = pd.read_csv(args.data_path + '/component_number_per_line.csv',
+	                                             header=None).values.tolist()
 	data_margin_and_radius = pd.read_csv(args.data_path + '/margin_and_radius.csv', header=None).values.tolist()
 	data_component_position = pd.read_csv(args.data_path + '/component_position.csv', header=None).values.tolist()
 	
@@ -165,11 +173,14 @@ def init_data():
 		component_position_per_line.append(component_position)
 	for i in range(len(component_position_per_line)):
 		for j in range(len(component_position_per_line[i])):
-			component_position_per_line[i][j] = point_dir[component_position_per_line[i][j][0], component_position_per_line[i][j][1], component_position_per_line[i][j][2]]
+			component_position_per_line[i][j] = point_dir[
+				component_position_per_line[i][j][0], component_position_per_line[i][j][1],
+				component_position_per_line[i][j][2]]
 	return points, adjacency_point, component_position_per_line
 
-#同一树中，多个子线路的汇聚点
-#components_flag表示各个子线的距离
+
+# 同一树中，多个子线路的汇聚点
+# components_flag表示各个子线的距离
 def get_convergence_point(components_flag, graph):
 	point_list = get_point_list(graph)
 	index_number = int(math.pow(len(point_list), 0.5) / 2)
@@ -181,13 +192,16 @@ def get_convergence_point(components_flag, graph):
 			break
 	return index[min_index], total_distance[min_index]
 
-#从图中得到点的列表
+
+# 从图中得到点的列表
 def get_point_list(graph):
 	return [i for i in graph.get_points()]
-#找一条子路
-#flag表示子路
-#graph表示图
-#convergence_point表示汇聚点，也就是出发点
+
+
+# 找一条子路
+# flag表示子路
+# graph表示图
+# convergence_point表示汇聚点，也就是出发点
 def get_child_path(graph, flag, convergence_point):
 	adjacency_point = graph.get_adjacency_point()
 	path = set()
@@ -203,6 +217,7 @@ def get_child_path(graph, flag, convergence_point):
 		path.add(current_point)
 	return path
 
+
 def get_adjacent_point(graph, points):
 	adjacent_point = {}
 	parent_adjacent_point = graph.get_adjacency_point()
@@ -214,6 +229,7 @@ def get_adjacent_point(graph, points):
 				temp.add(j)
 		adjacent_point[i] = temp
 	return adjacent_point
+
 
 def get_path(graph_manage):
 	task_list = graph_manage.task_list
@@ -229,10 +245,13 @@ def get_path(graph_manage):
 		else:
 			task_list.append(current_task)
 	return graph_manage
-	
+
+
 def get_path_format(points, adjacency_point, component_position_per_line):
-	graph_manage = GraphManage(adjacency_point=adjacency_point, points=points, component_position_per_line=component_position_per_line)
+	graph_manage = GraphManage(adjacency_point=adjacency_point, points=points,
+	                           component_position_per_line=component_position_per_line)
 	return get_path(graph_manage)
+
 
 def get_path_mutiprocesing(points, adjacency_point, component_position_per_line, run_number):
 	pool = multiprocessing.Pool()
@@ -282,7 +301,7 @@ def get_child_path_mutiprocessing(graph, flags, convergence_point):
 	results = []
 	for flag in flags:
 		results.append(pool.apply_async(get_child_path_format, args=(
-		graph.get_points(), graph.get_adjacency_point(), flag, convergence_point)))
+			graph.get_points(), graph.get_adjacency_point(), flag, convergence_point)))
 	pool.close()
 	pool.join()
 	path = set()
@@ -307,20 +326,19 @@ def get_one_path(graph, components_position):
 	end_time = time.time()
 	print(end_time - start_time)
 	return path
-	
-	
+
+
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
 	parser.add_argument("--data_path", type=str, default="./data/instance3")
 	parser.add_argument("--is_connected", type=str, default="connected")
 	args = parser.parse_args()
-
+	
 	points, adjacency_point, component_position_per_line = init_data()
 	graph_manage = GraphManage(points, adjacency_point, component_position_per_line)
 	task_list = graph_manage.task_list
 	get_path(graph_manage)
 	while len(task_list) > 0:
-
 		
 		print(task_list)
 		index, _ = graph_manage.delete_path()
@@ -332,10 +350,8 @@ if __name__ == "__main__":
 			path = get_one_path(residual_graph, component_position_per_line[child_path_index])
 			graph_manage.add_path(child_path_index, path)
 		get_path(graph_manage)
-		
-
+	
 	print(graph_manage.get_edges_number())
-
 	
 	print(len(graph_manage.task_list))
 	print(len(task_list))
