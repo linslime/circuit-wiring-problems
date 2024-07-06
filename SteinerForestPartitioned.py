@@ -247,6 +247,39 @@ def get_min_one_path(graph, components_position):
 		path.update(points)
 
 	return path
+#根据点获得临边
+def get_adjacent_point(graph, points):
+	adjacent_point = {}
+	parent_adjacent_point = graph.get_adjacency_point()
+	for i in points:
+		next_points = parent_adjacent_point[i]
+		temp = set()
+		for j in next_points:
+			if j in points:
+				temp.add(j)
+		adjacent_point[i] = temp
+	return adjacent_point
+
+#检查图是否正确
+def check_graph_manage(graph_manage):
+	# 检查各个线路之间是否有交叉
+	paths = graph_manage.child_path
+	for i in range(len(paths)):
+		for j in range(i + 1, len(paths)):
+			if len(paths[i] & paths[j]) > 0:
+				print("failure")
+			else:
+				print("success")
+	# 检查各个线路是否包含相应component,且相互连通
+	child_path_index = graph_manage.child_path_index
+	child_path = graph_manage.child_path
+	for i in range(len(child_path_index)):
+		child_adjacent_point = get_adjacent_point(graph_manage.parent_graph, child_path[i])
+		child_graph = Graph(adjacency_point=child_adjacent_point, points=child_path[i])
+		if child_graph.is_connected(component_position_per_line[child_path_index[i]]):
+			print("success")
+		else:
+			print("failure")
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
@@ -261,7 +294,6 @@ if __name__ == "__main__":
 	while len(task_list) > 0:
 	
 		print(task_list)
-		start_time = time.time()
 		get_path(graph_manage)
 		delete_path_number = int(math.pow(len(graph_manage.child_path), 0.5))//2
 		for i in range(delete_path_number):
@@ -269,9 +301,9 @@ if __name__ == "__main__":
 			residual_graph = graph_manage.get_residual_graph()
 			path = get_one_path(residual_graph, component_position_per_line[child_path_index])
 			graph_manage.add_path(child_path_index, path)
-		end_time = time.time()
-		print(end_time - start_time)
 	print(graph_manage.get_edges_number())
+	
+	check_graph_manage(graph_manage)
 	
 	while True:
 		for i in range(len(graph_manage.child_path)):
