@@ -250,7 +250,7 @@ def get_min_one_path(graph, components_position):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
-	parser.add_argument("--data_path", type=str, default="./data/instance1")
+	parser.add_argument("--data_path", type=str, default="./data/instance3")
 	parser.add_argument("--is_connected", type=str, default="connected")
 	args = parser.parse_args()
 	
@@ -263,11 +263,8 @@ if __name__ == "__main__":
 		print(task_list)
 		start_time = time.time()
 		get_path(graph_manage)
-		if random.random() < 0.3:
-			index, _ = graph_manage.delete_path()
-			task_list.append(index)
-		
-		for i in range(len(graph_manage.child_path)):
+		delete_path_number = int(math.pow(len(graph_manage.child_path), 0.5))//2
+		for i in range(delete_path_number):
 			child_path_index, _ = graph_manage.delete_path()
 			residual_graph = graph_manage.get_residual_graph()
 			path = get_one_path(residual_graph, component_position_per_line[child_path_index])
