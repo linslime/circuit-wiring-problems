@@ -176,8 +176,13 @@ def get_convergence_point(components_flag, visited):
 	min_index = np.argmin(total_distance)
 	
 	return index[min_index], total_distance[min_index]
-
-
+# 同一树中，多个子线路的最小汇聚点
+# components_flag表示各个子线的距离
+def get_min_convergence_point(components_flag, visited):
+	total_distance = np.sum([components_flag[i][visited] for i in range(len(components_flag))], axis=0)
+	min_index = np.argmin(total_distance)
+	
+	return visited[min_index], total_distance[min_index]
 # 找一条子路
 # flag表示子路
 # graph表示图
@@ -228,11 +233,25 @@ def get_one_path(graph, components_position):
 
 	return path
 
+def get_min_one_path(graph, components_position):
+	flags = []
+	for i in range(len(components_position)):
+		flag, visited = get_flag(graph ,components_position[i])
+		flags.append(flag)
+
+	convergence_point, _ = get_min_convergence_point(flags, visited)
+
+	path = set()
+	for flag in flags:
+		points = get_child_path(graph, flag, convergence_point)
+		path.update(points)
+
+	return path
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
-	parser.add_argument("--data_path", type=str, default="./data/instance2")
-	parser.add_argument("--is_connected", type=str, default="connected")
+	parser.add_argument("--data_path", type=str, default="./data/instance3")
+	parser.add_argument("--is_connected", type=str, default="unconnected")
 	args = parser.parse_args()
 	
 	points, adjacency_point, component_position_per_line = init_data()
@@ -261,6 +280,6 @@ if __name__ == "__main__":
 		for i in range(len(graph_manage.child_path)):
 			child_path_index, _ = graph_manage.delete_path()
 			residual_graph = graph_manage.get_residual_graph()
-			path = get_one_path(residual_graph, component_position_per_line[child_path_index])
+			path = get_min_one_path(residual_graph, component_position_per_line[child_path_index])
 			graph_manage.add_path(child_path_index, path)
 		print(graph_manage.get_edges_number())
