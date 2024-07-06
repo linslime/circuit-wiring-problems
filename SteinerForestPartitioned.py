@@ -83,20 +83,6 @@ class Graph():
 			if flag[i] == -1:
 				return False
 		return True
-	
-	def get_distance(self, component):
-		flag = np.full(self.parent_point_length, -1)
-		visit = [component]
-		flag[component] = 0
-		while len(visit) != 0:
-			current_point = visit.pop(0)
-			next_points = self.__adjacency_point[current_point]
-			for i in next_points:
-				if flag[i] == -1:
-					flag[i] = flag[current_point] + 1
-					visit.append(i)
-		return flag
-
 
 def get_flag(graph, component):
 	flag = np.full(graph.parent_point_length, -1)
@@ -218,19 +204,6 @@ def get_child_path(graph, flag, convergence_point):
 	return path
 
 
-def get_adjacent_point(graph, points):
-	adjacent_point = {}
-	parent_adjacent_point = graph.get_adjacency_point()
-	for i in points:
-		next_points = parent_adjacent_point[i]
-		temp = set()
-		for j in next_points:
-			if j in points:
-				temp.add(j)
-		adjacent_point[i] = temp
-	return adjacent_point
-
-
 def get_path(graph_manage):
 	task_list = graph_manage.task_list
 	component_position_per_line = graph_manage.component_position_per_line
@@ -246,31 +219,10 @@ def get_path(graph_manage):
 			task_list.append(current_task)
 	return graph_manage
 
-
-def get_path_format(points, adjacency_point, component_position_per_line):
-	graph_manage = GraphManage(adjacency_point=adjacency_point, points=points, component_position_per_line=component_position_per_line)
-	return get_path(graph_manage)
-
-
-def get_path_mutiprocesing(points, adjacency_point, component_position_per_line, run_number):
-	pool = multiprocessing.Pool()
-	results = []
-	for i in range(run_number):
-		results.append(pool.apply_async(get_path_format, args=(points, adjacency_point, component_position_per_line)))
-	pool.close()
-	pool.join()
-	max_length = 0
-	max_result = 0
-	for result in results:
-		if max_length < len(result.get().child_path):
-			max_length = len(result.get().child_path)
-			max_result = result.get()
-	return max_result
-
 def get_one_path(graph, components_position):
 	flags = []
 	for i in range(len(components_position)):
-		flag = graph.get_distance(components_position[i])
+		flag = get_flag(graph ,components_position[i])
 		flags.append(flag)
 
 	convergence_point, _ = get_convergence_point(flags, graph)
