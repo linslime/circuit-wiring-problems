@@ -329,13 +329,17 @@ if __name__ == "__main__":
 	min_graph_manage = copy.deepcopy(graph_manage)
 	while True:
 		for i in range(len(graph_manage.child_path)):
-			child_path_index, _ = graph_manage.delete_path()
+			child_path_index, old_path = graph_manage.delete_path()
 			residual_graph = graph_manage.get_residual_graph()
 			if random.random() < 0.9993:
 				path = get_min_one_path(residual_graph, component_position_per_line[child_path_index])
+				if len(path) <= len(old_path):
+					graph_manage.add_path(child_path_index, path)
+				else:
+					graph_manage.add_path(child_path_index, old_path)
 			else:
 				path = get_one_path(residual_graph, component_position_per_line[child_path_index])
-			graph_manage.add_path(child_path_index, path)
+				graph_manage.add_path(child_path_index, path)
 			
 			edge_number = graph_manage.get_edges_number()
 			if edge_number < min_value:
