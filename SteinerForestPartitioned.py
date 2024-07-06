@@ -5,7 +5,6 @@ import time
 import random
 import numpy as np
 import math
-import multiprocessing
 
 
 class GraphManage():
@@ -163,6 +162,7 @@ def init_data():
 			component_position_per_line[i][j] = point_dir[
 				component_position_per_line[i][j][0], component_position_per_line[i][j][1],
 				component_position_per_line[i][j][2]]
+	random.shuffle(component_position_per_line)
 	return points, adjacency_point, component_position_per_line
 
 
@@ -250,8 +250,8 @@ def get_min_one_path(graph, components_position):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
-	parser.add_argument("--data_path", type=str, default="./data/instance3")
-	parser.add_argument("--is_connected", type=str, default="unconnected")
+	parser.add_argument("--data_path", type=str, default="./data/instance1")
+	parser.add_argument("--is_connected", type=str, default="connected")
 	args = parser.parse_args()
 	
 	points, adjacency_point, component_position_per_line = init_data()
@@ -280,6 +280,10 @@ if __name__ == "__main__":
 		for i in range(len(graph_manage.child_path)):
 			child_path_index, _ = graph_manage.delete_path()
 			residual_graph = graph_manage.get_residual_graph()
-			path = get_min_one_path(residual_graph, component_position_per_line[child_path_index])
+			if random.random() < 0.9993:
+				path = get_min_one_path(residual_graph, component_position_per_line[child_path_index])
+			else:
+				path = get_one_path(residual_graph, component_position_per_line[child_path_index])
 			graph_manage.add_path(child_path_index, path)
-		print(graph_manage.get_edges_number())
+			print(graph_manage.get_edges_number())
+		print("success")
