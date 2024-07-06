@@ -238,13 +238,29 @@ def get_min_one_path(graph, components_position):
 	for i in range(len(components_position)):
 		flag, visited = get_flag(graph ,components_position[i])
 		flags.append(flag)
-
-	convergence_point, _ = get_min_convergence_point(flags, visited)
-
 	path = set()
-	for flag in flags:
-		points = get_child_path(graph, flag, convergence_point)
-		path.update(points)
+	if len(components_position) >= 4:
+		flag_index = [i for i in range(len(components_position))]
+		random.shuffle(flag_index)
+		temp_flags = [flags[flag_index[i]] for i in range(3)]
+		convergence_point, _ = get_min_convergence_point(temp_flags, visited)
+		
+		for flag in temp_flags:
+			points = get_child_path(graph, flag, convergence_point)
+			path.update(points)
+		
+		for i in range(3, len(components_position)):
+			path = list(path)
+			index = np.argmin(flags[flag_index[i]][path])
+			points = get_child_path(graph, flags[flag_index[i]], path[index])
+			path = set(path)
+			path.update(points)
+			
+	else:
+		convergence_point, _ = get_min_convergence_point(flags, visited)
+		for flag in flags:
+			points = get_child_path(graph, flag, convergence_point)
+			path.update(points)
 
 	return path
 #根据点获得临边
@@ -284,7 +300,7 @@ def check_graph_manage(graph_manage):
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
 	parser.add_argument("--data_path", type=str, default="./data/instance3")
-	parser.add_argument("--is_connected", type=str, default="connected")
+	parser.add_argument("--is_connected", type=str, default="unconnected")
 	args = parser.parse_args()
 	
 	points, adjacency_point, component_position_per_line = init_data()
