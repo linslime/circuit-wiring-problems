@@ -1,10 +1,10 @@
 import pandas as pd
 import argparse
 import copy
-import time
 import random
 import numpy as np
 import math
+import multiprocessing
 
 
 class GraphManage():
@@ -297,25 +297,19 @@ def check_graph_manage(graph_manage):
 		else:
 			print("failure")
 
-if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='manual to this script')
-	parser.add_argument("--data_path", type=str, default="./data/instance3")
-	parser.add_argument("--is_connected", type=str, default="unconnected")
-	args = parser.parse_args()
-	
-	points, adjacency_point, component_position_per_line = init_data()
+def run(points, adjacency_point, component_position_per_line):
 	graph_manage = GraphManage(points, adjacency_point, component_position_per_line)
 	task_list = graph_manage.task_list
 	
 	while len(task_list) > 0:
-	
-		print(task_list)
+		
+		# print(task_list)
 		get_path(graph_manage)
-		delete_path_number = int(math.pow(len(graph_manage.child_path), 0.5))//2
-		if len(task_list) == 1 or random.random() < 0.1:
+		delete_path_number = int(math.pow(len(graph_manage.child_path), 0.5)) // 2
+		if len(task_list) == 1 or random.random() < 0.05:
 			index, _ = graph_manage.delete_path()
 			task_list.append(index)
-			
+		
 		for i in range(delete_path_number):
 			child_path_index, _ = graph_manage.delete_path()
 			residual_graph = graph_manage.get_residual_graph()
@@ -345,4 +339,20 @@ if __name__ == "__main__":
 			if edge_number < min_value:
 				min_value = edge_number
 				min_graph_manage = copy.deepcopy(graph_manage)
+				
 			print(min_value, edge_number)
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description='manual to this script')
+	parser.add_argument("--data_path", type=str, default="./data/instance3")
+	parser.add_argument("--is_connected", type=str, default="unconnected")
+	args = parser.parse_args()
+	
+	points, adjacency_point, component_position_per_line = init_data()
+	
+	lock = multiprocessing.Lock()
+	pool = multiprocessing.Pool(processes=11)
+	for i in range(11):
+		pool.apply_async(run, args=(points, adjacency_point, component_position_per_line))
+	pool.close()
+	pool.join()
