@@ -85,9 +85,10 @@ class Graph():
 		return True
 
 def get_flag(graph, component):
-	flag = np.full(graph.parent_point_length, -1)
-	visit = [component]
+	flag = np.full(Graph.parent_point_length, -1)
 	flag[component] = 0
+	visit = [component]
+	visited = [component]
 	while len(visit) != 0:
 		current_point = visit.pop(0)
 		next_points = graph.get_adjacency_point()[current_point]
@@ -95,8 +96,8 @@ def get_flag(graph, component):
 			if flag[i] == -1:
 				flag[i] = flag[current_point] + 1
 				visit.append(i)
-	# print(flag)
-	return flag
+				visited.append(i)
+	return flag, visited
 
 
 def init_data():
@@ -167,21 +168,14 @@ def init_data():
 
 # 同一树中，多个子线路的汇聚点
 # components_flag表示各个子线的距离
-def get_convergence_point(components_flag, graph):
-	point_list = get_point_list(graph)
-	index_number = int(math.pow(len(point_list), 0.5) / 2)
-	while True:
-		index = random.sample(point_list, index_number)
-		total_distance = np.sum([components_flag[i][index] for i in range(len(components_flag))], axis=0)
-		min_index = np.argmin(total_distance)
-		if total_distance[min_index] > 0:
-			break
+def get_convergence_point(components_flag, visited):
+	index_number = int(math.pow(len(visited), 0.5) / 2)
+	
+	index = random.sample(visited, index_number)
+	total_distance = np.sum([components_flag[i][index] for i in range(len(components_flag))], axis=0)
+	min_index = np.argmin(total_distance)
+	
 	return index[min_index], total_distance[min_index]
-
-
-# 从图中得到点的列表
-def get_point_list(graph):
-	return [i for i in graph.get_points()]
 
 
 # 找一条子路
@@ -222,10 +216,10 @@ def get_path(graph_manage):
 def get_one_path(graph, components_position):
 	flags = []
 	for i in range(len(components_position)):
-		flag = get_flag(graph ,components_position[i])
+		flag, visited = get_flag(graph ,components_position[i])
 		flags.append(flag)
 
-	convergence_point, _ = get_convergence_point(flags, graph)
+	convergence_point, _ = get_convergence_point(flags, visited)
 
 	path = set()
 	for flag in flags:
@@ -237,39 +231,36 @@ def get_one_path(graph, components_position):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='manual to this script')
-	parser.add_argument("--data_path", type=str, default="./data/instance3")
+	parser.add_argument("--data_path", type=str, default="./data/instance2")
 	parser.add_argument("--is_connected", type=str, default="connected")
 	args = parser.parse_args()
 	
 	points, adjacency_point, component_position_per_line = init_data()
 	graph_manage = GraphManage(points, adjacency_point, component_position_per_line)
 	task_list = graph_manage.task_list
-	get_path(graph_manage)
+	
 	while len(task_list) > 0:
 	
 		print(task_list)
 		start_time = time.time()
-		index, _ = graph_manage.delete_path()
-		task_list.append(index)
+		get_path(graph_manage)
+		if random.random() < 0.3:
+			index, _ = graph_manage.delete_path()
+			task_list.append(index)
 		
 		for i in range(len(graph_manage.child_path)):
 			child_path_index, _ = graph_manage.delete_path()
 			residual_graph = graph_manage.get_residual_graph()
 			path = get_one_path(residual_graph, component_position_per_line[child_path_index])
 			graph_manage.add_path(child_path_index, path)
-		get_path(graph_manage)
 		end_time = time.time()
 		print(end_time - start_time)
 	print(graph_manage.get_edges_number())
 	
-	print(len(graph_manage.task_list))
-	print(len(task_list))
-	print(len(graph_manage.child_path_index))
-	print(len(graph_manage.child_path))
-	paths = graph_manage.child_path
-	for i in range(len(paths)):
-		for j in range(i + 1, len(paths)):
-			if len(paths[i] & paths[j]) > 0:
-				print("fail")
-			else:
-				print("success")
+	while True:
+		for i in range(len(graph_manage.child_path)):
+			child_path_index, _ = graph_manage.delete_path()
+			residual_graph = graph_manage.get_residual_graph()
+			path = get_one_path(residual_graph, component_position_per_line[child_path_index])
+			graph_manage.add_path(child_path_index, path)
+		print(graph_manage.get_edges_number())
