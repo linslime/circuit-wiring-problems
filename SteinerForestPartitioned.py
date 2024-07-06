@@ -333,7 +333,7 @@ if __name__ == "__main__":
 			residual_graph = graph_manage.get_residual_graph()
 			if random.random() < 0.9993:
 				path = get_min_one_path(residual_graph, component_position_per_line[child_path_index])
-				if len(path) <= len(old_path):
+				if len(path) <= len(old_path) or random.random() < 0.1:
 					graph_manage.add_path(child_path_index, path)
 				else:
 					graph_manage.add_path(child_path_index, old_path)
