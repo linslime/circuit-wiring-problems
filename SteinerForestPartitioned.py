@@ -312,6 +312,10 @@ if __name__ == "__main__":
 		print(task_list)
 		get_path(graph_manage)
 		delete_path_number = int(math.pow(len(graph_manage.child_path), 0.5))//2
+		if len(task_list) == 1 or random.random() < 0.1:
+			index, _ = graph_manage.delete_path()
+			task_list.append(index)
+			
 		for i in range(delete_path_number):
 			child_path_index, _ = graph_manage.delete_path()
 			residual_graph = graph_manage.get_residual_graph()
@@ -321,6 +325,8 @@ if __name__ == "__main__":
 	
 	check_graph_manage(graph_manage)
 	
+	min_value = graph_manage.get_edges_number()
+	min_graph_manage = copy.deepcopy(graph_manage)
 	while True:
 		for i in range(len(graph_manage.child_path)):
 			child_path_index, _ = graph_manage.delete_path()
@@ -330,5 +336,9 @@ if __name__ == "__main__":
 			else:
 				path = get_one_path(residual_graph, component_position_per_line[child_path_index])
 			graph_manage.add_path(child_path_index, path)
-			print(graph_manage.get_edges_number())
-		print("success")
+			
+			edge_number = graph_manage.get_edges_number()
+			if edge_number < min_value:
+				min_value = edge_number
+				min_graph_manage = copy.deepcopy(graph_manage)
+			print(min_value, edge_number)
